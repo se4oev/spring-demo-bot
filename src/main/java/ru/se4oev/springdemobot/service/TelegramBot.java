@@ -37,7 +37,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
-            log.info("Receive message {}", update);
+            log.info("Receive message {} \n from: {}", update.getMessage(), update.getMessage().getChat());
             switch (message) {
                 case "/start" -> startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
                 default -> sendMessage(chatId, "Sorry, I don't understand command :( ");
@@ -55,7 +55,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            log.error("Наступила пиздося", e);
+            log.error("Error occurred: {}", e.getMessage());
         }
     }
 
