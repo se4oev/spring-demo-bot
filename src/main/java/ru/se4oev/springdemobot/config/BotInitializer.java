@@ -1,8 +1,6 @@
 package ru.se4oev.springdemobot.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -15,10 +13,9 @@ import ru.se4oev.springdemobot.service.TelegramBot;
  * Created by karpenko on 25.08.2022.
  * Description:
  */
+@Slf4j
 @Component
 public class BotInitializer {
-
-    Logger logger = LoggerFactory.getLogger(getClass());
 
     TelegramBot bot;
 
@@ -32,7 +29,7 @@ public class BotInitializer {
         try {
             telegramBotsApi.registerBot(bot);
         } catch (TelegramApiException e) {
-            logger.error("Пиздося", e);
+            log.error("Пиздося", e);
         }
     }
 

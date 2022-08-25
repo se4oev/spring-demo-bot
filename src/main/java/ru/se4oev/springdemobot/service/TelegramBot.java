@@ -1,7 +1,6 @@
 package ru.se4oev.springdemobot.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,10 +12,9 @@ import ru.se4oev.springdemobot.config.BotConfig;
  * Created by karpenko on 25.08.2022.
  * Description:
  */
+@Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
-
-    Logger logger = LoggerFactory.getLogger(getClass());
 
     final BotConfig config;
 
@@ -39,18 +37,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
-            logger.info("Receive message {}", update);
+            log.info("Receive message {}", update);
             switch (message) {
-                case "/start":
-                    startCommangdReceived(chatId, update.getMessage().getChat().getFirstName());
-                    break;
-                default:
-                    sendMessage(chatId, "Sorry, I don't understand command :( ");
+                case "/start" -> startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+                default -> sendMessage(chatId, "Sorry, I don't understand command :( ");
             }
         }
     }
 
-    private void startCommangdReceived(long chatId, String name) {
+    private void startCommandReceived(long chatId, String name) {
         String answer = "Hi, " + name + ", nice to meet you!";
         sendMessage(chatId, answer);
     }
@@ -60,7 +55,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            logger.error("Наступила пиздося", e);
+            log.error("Наступила пиздося", e);
         }
     }
 
