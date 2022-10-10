@@ -5,12 +5,16 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.se4oev.springdemobot.config.BotConfig;
+import ru.se4oev.springdemobot.model.User;
+import ru.se4oev.springdemobot.model.UserRepository;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,14 +26,16 @@ import java.util.List;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
-    final BotConfig config;
+    private final UserRepository userRepository;
+    private final BotConfig config;
     private final static String HELP_TEXT = """
             This bot is created to demonstrate.\s
             You can execute commands from main menu.\s
             Type /start to start use the bot.\s""";
 
-    public TelegramBot(BotConfig config) {
+    public TelegramBot(BotConfig config, UserRepository userRepository) {
         this.config = config;
+        this.userRepository = userRepository;
         List<BotCommand> commands = new ArrayList<>();
         commands.add(new BotCommand("/start", "get a welcome message"));
         commands.add(new BotCommand("/mydata", "get user data"));
@@ -60,10 +66,30 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
             log.info("Receive message {} \n from: {}", update.getMessage(), update.getMessage().getChat());
             switch (message) {
-                case "/start" -> startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                case "/help" -> sendMessage(chatId, HELP_TEXT);
-                default -> sendMessage(chatId, "Sorry, I don't understand command :( ");
+                case "/start":
+                    registerUser(update.getMessage());
+                    startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+                case "/help":
+                    sendMessage(chatId, HELP_TEXT);
+                default:
+                    sendMessage(chatId, "Sorry, I don't understand command :( ");
             }
+        }
+    }
+
+    private void registerUser(Message message) {
+        if (userRepository.findById(message.getChatId()).isEmpty()) {
+            var chatId = message.getChatId();
+            var chat = message.getChat();
+            User user = new User();
+            user.setChatId(chatId);
+            user.setFirstName(chat.getFirstName());
+            user.setLastName(chat.getLastName());
+            user.setUserName(chat.getUserName());
+            user.setRegisteredAt(new Timestamp(System.currentTimeMillis()));
+
+            userRepository.save(user);
+            log.info("user saved: " + user);
         }
     }
 
