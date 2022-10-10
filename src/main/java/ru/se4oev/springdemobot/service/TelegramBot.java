@@ -1,5 +1,6 @@
 package ru.se4oev.springdemobot.service;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -11,10 +12,8 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.se4oev.springdemobot.config.BotConfig;
-import ru.se4oev.springdemobot.model.User;
-import ru.se4oev.springdemobot.model.UserRepository;
+import ru.se4oev.springdemobot.model.UserService;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,16 +25,16 @@ import java.util.List;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final BotConfig config;
     private final static String HELP_TEXT = """
             This bot is created to demonstrate.\s
             You can execute commands from main menu.\s
             Type /start to start use the bot.\s""";
 
-    public TelegramBot(BotConfig config, UserRepository userRepository) {
+    public TelegramBot(BotConfig config, UserService userService) {
         this.config = config;
-        this.userRepository = userRepository;
+        this.userService = userService;
         List<BotCommand> commands = new ArrayList<>();
         commands.add(new BotCommand("/start", "get a welcome message"));
         commands.add(new BotCommand("/mydata", "get user data"));
@@ -69,33 +68,23 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/start":
                     registerUser(update.getMessage());
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+                    break;
                 case "/help":
                     sendMessage(chatId, HELP_TEXT);
+                    break;
                 default:
                     sendMessage(chatId, "Sorry, I don't understand command :( ");
             }
         }
     }
 
-    private void registerUser(Message message) {
-        if (userRepository.findById(message.getChatId()).isEmpty()) {
-            var chatId = message.getChatId();
-            var chat = message.getChat();
-            User user = new User();
-            user.setChatId(chatId);
-            user.setFirstName(chat.getFirstName());
-            user.setLastName(chat.getLastName());
-            user.setUserName(chat.getUserName());
-            user.setRegisteredAt(new Timestamp(System.currentTimeMillis()));
-
-            userRepository.save(user);
-            log.info("user saved: " + user);
-        }
+    private void startCommandReceived(long chatId, String name) {
+        String answer = EmojiParser.parseToUnicode("Hi, " + name + ", nice to meet you!" + " :blush:");
+        sendMessage(chatId, answer);
     }
 
-    private void startCommandReceived(long chatId, String name) {
-        String answer = "Hi, " + name + ", nice to meet you!";
-        sendMessage(chatId, answer);
+    private void registerUser(Message message) {
+        userService.registerUser(message);
     }
 
     private void sendMessage(long chatId, String text) {
