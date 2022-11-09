@@ -10,6 +10,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.se4oev.springdemobot.config.BotConfig;
 import ru.se4oev.springdemobot.model.UserService;
@@ -37,8 +39,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.userService = userService;
         List<BotCommand> commands = new ArrayList<>();
         commands.add(new BotCommand("/start", "get a welcome message"));
-        commands.add(new BotCommand("/mydata", "get user data"));
-        commands.add(new BotCommand("/deletedata", "delete my data"));
+        commands.add(new BotCommand("/myData", "get user data"));
+        commands.add(new BotCommand("/deleteData", "delete my data"));
         commands.add(new BotCommand("/help", "list of commands"));
         commands.add(new BotCommand("/settings", "set your preferences"));
         try {
@@ -65,15 +67,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
             log.info("Receive message {} \n from: {}", update.getMessage(), update.getMessage().getChat());
             switch (message) {
-                case "/start":
+                case "/start" -> {
                     registerUser(update.getMessage());
                     startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                    break;
-                case "/help":
-                    sendMessage(chatId, HELP_TEXT);
-                    break;
-                default:
-                    sendMessage(chatId, "Sorry, I don't understand command :( ");
+                }
+                case "/help" -> sendMessage(chatId, HELP_TEXT);
+                default -> sendMessage(chatId, "Sorry, I don't understand command :( ");
             }
         }
     }
@@ -89,6 +88,25 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void sendMessage(long chatId, String text) {
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
+
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> rows = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        row.add("weather");
+        row.add("get random joke");
+        rows.add(row);
+
+        row = new KeyboardRow();
+        row.add("register");
+        row.add("check my data");
+        row.add("delete my data");
+
+        rows.add(row);
+
+        keyboardMarkup.setKeyboard(rows);
+
+        message.setReplyMarkup(keyboardMarkup);
+
         try {
             execute(message);
         } catch (TelegramApiException e) {
